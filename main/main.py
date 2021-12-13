@@ -1,51 +1,52 @@
-import Constants as keys
-from telegram.ext import *
+import logging
+import asyncio
+from aiogram.utils.exceptions import BotBlocked
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.dispatcher import Dispatcher
+from os import getenv
+from sys import exit
 import Responses as R
+import time
+
+bot_token = getenv("BOT_TOKEN")
+if not bot_token:
+    exit("Error: no token provided")
+
+bot = Bot(token=bot_token)
+dp = Dispatcher(bot)
+
+logging.basicConfig(level=logging.INFO)
 
 print("PROGRAM START")
-# context по идее уже необязателен в этой версии питона но оставим
-# наборы команд
+# пример обработчика ошибки
+@dp.message_handler(commands="block")
+async def cmd_block(message: types.Message):
+    await asyncio.sleep(10.0)  # Здоровый сон на 10 секунд
+    await message.reply("Вы заблокированы")
+
+@dp.errors_handler(exception=BotBlocked)
+async def error_bot_blocked(update: types.Update, exception: BotBlocked):
+    # Update: объект события от Telegram. Exception: объект исключения
+    # Здесь можно как-то обработать блокировку, например, удалить пользователя из БД
+    print(f"Меня заблокировал пользователь!\nСообщение: {update}\nОшибка: {exception}")
+
+    # Такой хэндлер должен всегда возвращать True,
+    # если дальнейшая обработка не требуется.
+    return True
 
 
-def start_command(update, context):
-    update.message.reply_text('1')  # команда начала
+@dp.message_handler(commands="start") # новый обработчик
+async def cmd_test1(message: types.Message):  # await топерь обязателен
+    await message.reply("start is working")
 
 
-def help_command(update, context):
-    update.message.reply_text('2')  # команда помощи
+@dp.message_handler(commands="help")
+async def cmd_test1(message: types.Message):
+    await message.reply("help is working")
 
-
-def handle_message(update, context):
-    text = str(update.massage.text).lower()
-    response = R.simple_responses(text)
-    update.massage.reply_text(response)
-
-
-def error(update,context):
-    print(f"Update {update} caused error {context.error}")  # обработчик ошибок
-
-
-def main():
-    updater = Updater(keys.token, use_context=True)  # апдейтр запускает бота
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start_command))  # обработчик команды с названием
-    dp.add_handler(CommandHandler("help", help_command))
-
-    dp.add_handler(MessageHandler(Filters.text, handle_message))
-
-    dp.add_error_handler(error)
-
-    updater.start_polling()  # проверяет ввод постоянно(можно поставить задержку)
-    updater.idle()
-
-
-main()
-
-
-
-
-
+if __name__ == "__main__":
+    # Запуск бота
+    executor.start_polling(dp, skip_updates=True)
 
 
 
