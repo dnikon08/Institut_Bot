@@ -16,9 +16,9 @@ def help_command(update, context):
 
 
 def handle_message(update, context):
-    text = str(update.massage.text).lower()
+    text = str(update.message.text).lower()
     response = R.simple_responses(text)
-    update.massage.reply_text(response)
+    update.message.reply_text(response)
 
 
 def error(update,context):
